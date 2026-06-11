@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="MyWine">
+  <rect width="256" height="256" rx="58" fill="#16070d"/>
+  <circle cx="128" cy="128" r="96" fill="#3f0d1f"/>
+  <path d="M116 47h24v33l16 17v84a35 35 0 0 1-35 35h-10a35 35 0 0 1-35-35V97l16-17V47h24Z" fill="#f8e7dc"/>
+  <path d="M100 113h50v61a25 25 0 0 1-25 25h-1a24 24 0 0 1-24-24v-62Z" fill="#8e2445"/>
+  <path d="M146 92c16 2 28 13 30 29 3 22-12 38-35 38h-17V99c6-6 13-8 22-7Z" fill="#f8b9cd" opacity=".65"/>
+  <path d="M92 47h48v18H92z" fill="#f8b9cd"/>
+</svg>
