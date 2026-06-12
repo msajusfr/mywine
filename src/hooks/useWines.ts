@@ -1,4 +1,5 @@
 import { useCallback } from 'react'
+import { compressPhotoDataUrl, isLargePhoto } from '../services/photoCompression'
 import { wineStorage } from '../services/wineStorage'
 import type { Wine, WineDraft } from '../types/wine'
 import { useLocalStorage } from './useLocalStorage'
@@ -17,6 +18,25 @@ const sortNewestFirst = (wines: Wine[]) =>
       new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime(),
   )
 
+const compactWinePhotos = async (wines: Wine[]) =>
+  Promise.all(
+    wines.map(async (wine) => {
+      if (!isLargePhoto(wine.photo)) {
+        return wine
+      }
+
+      try {
+        return {
+          ...wine,
+          photo: await compressPhotoDataUrl(wine.photo),
+          updatedAt: wine.updatedAt ?? new Date().toISOString(),
+        }
+      } catch {
+        return wine
+      }
+    }),
+  )
+
 export function useWines() {
   const {
     value: wines,
@@ -25,7 +45,7 @@ export function useWines() {
   } = useLocalStorage<Wine[]>(wineStorage)
 
   const addWine = useCallback(
-    (draft: WineDraft) => {
+    async (draft: WineDraft) => {
       const now = new Date().toISOString()
       const wine: Wine = {
         id: createId(),
@@ -35,30 +55,47 @@ export function useWines() {
         createdAt: now,
       }
 
-      setWines((currentWines) => sortNewestFirst([wine, ...currentWines]))
+      const compactedWines = await compactWinePhotos(wines)
+      setWines(sortNewestFirst([wine, ...compactedWines]))
     },
-    [setWines],
+    [setWines, wines],
   )
 
   const updateWine = useCallback(
-    (id: string, draft: WineDraft) => {
-      setWines((currentWines) =>
-        sortNewestFirst(
-          currentWines.map((wine) =>
-            wine.id === id
-              ? {
-                  ...wine,
-                  photo: draft.photo,
-                  rating: draft.rating,
-                  comment: draft.comment.trim(),
-                  updatedAt: new Date().toISOString(),
-                }
-              : wine,
-          ),
-        ),
+    async (id: string, draft: WineDraft) => {
+      const nextWines = wines.map((wine) =>
+        wine.id === id
+          ? {
+              ...wine,
+              photo: draft.photo,
+              rating: draft.rating,
+              comment: draft.comment.trim(),
+              updatedAt: new Date().toISOString(),
+            }
+          : wine,
       )
+
+      setWines(sortNewestFirst(await compactWinePhotos(nextWines)))
     },
-    [setWines],
+    [setWines, wines],
+  )
+
+  const compactPhotos = useCallback(
+    async () => {
+      if (!wines.some((wine) => isLargePhoto(wine.photo))) {
+        return
+      }
+
+      const compactedWines = await compactWinePhotos(wines)
+      const hasSmallerPhoto = compactedWines.some(
+        (wine, index) => wine.photo.length < wines[index].photo.length,
+      )
+
+      if (hasSmallerPhoto) {
+        setWines(sortNewestFirst(compactedWines))
+      }
+    },
+    [setWines, wines],
   )
 
   const deleteWine = useCallback(
@@ -74,5 +111,6 @@ export function useWines() {
     addWine,
     updateWine,
     deleteWine,
+    compactPhotos,
   }
 }

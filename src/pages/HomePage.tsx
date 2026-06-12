@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Button } from '../components/Button'
 import { EmptyState } from '../components/EmptyState'
 import { WineCard } from '../components/WineCard'
@@ -7,9 +7,14 @@ import { useWines } from '../hooks/useWines'
 import type { Wine, WineDraft } from '../types/wine'
 
 export function HomePage() {
-  const { wines, storageError, addWine, updateWine, deleteWine } = useWines()
+  const { wines, storageError, addWine, updateWine, deleteWine, compactPhotos } =
+    useWines()
   const [editingWine, setEditingWine] = useState<Wine | null>(null)
   const formRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    void compactPhotos()
+  }, [compactPhotos])
 
   const scrollToForm = () => {
     formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
